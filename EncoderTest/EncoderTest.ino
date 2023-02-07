@@ -69,7 +69,9 @@ void loop() {
     delay(250);
   }
 	
-	// Read the current state of CLK
+  // only update clock through encoders if in MODE_SET.
+  if (currentMode == MODE_SET) {
+    // Read the current state of CLK
 	currentStateCLK = digitalRead(CLK);
 
 	// If last and current state of CLK are different, then pulse occurred
@@ -133,5 +135,9 @@ void loop() {
   servoPosition = map(seconds, 0, 300, 0, 180);
   servoPosition = 180 - servoPosition;
   clockServo.write(servoPosition);
+
+  }
+
+	
 
 }
