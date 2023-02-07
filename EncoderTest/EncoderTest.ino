@@ -5,6 +5,9 @@
 #define DT 3
 #define SW 4
 
+#define RED_LED 12
+#define MODE_BUTTON 13
+
 #define SERVOPIN 9
 
 int counter = 0;
@@ -17,12 +20,22 @@ int seconds = 0;
 int servoPosition = 0;
 Servo clockServo;
 
+enum SystemMode {
+  MODE_SET,
+  MODE_PLAY
+};
+
+SystemMode currentMode;
+
 void setup() {
 	
 	// Set encoder pins as inputs
 	pinMode(CLK,INPUT);
 	pinMode(DT,INPUT);
 	pinMode(SW, INPUT_PULLUP);
+
+  pinMode(RED_LED, OUTPUT);
+  pinMode(MODE_BUTTON, INPUT_PULLUP);
 
 	// Setup Serial Monitor
 	Serial.begin(115200);
@@ -31,9 +44,30 @@ void setup() {
 	lastStateCLK = digitalRead(CLK);
 
   clockServo.attach(SERVOPIN);
+
+  currentMode = MODE_SET;
 }
 
 void loop() {
+
+  // refresh LED.
+  if (currentMode == MODE_SET) {
+    // turn on LEDs
+    digitalWrite(RED_LED, HIGH);
+  } else {
+    digitalWrite(RED_LED, LOW);
+  }
+
+  // check mode button.
+  int modeVal = !digitalRead(MODE_BUTTON);
+  if (modeVal == 1) {
+    if (currentMode == MODE_SET) {
+      currentMode = MODE_PLAY;
+    } else {
+      currentMode = MODE_SET;
+    }
+    delay(250);
+  }
 	
 	// Read the current state of CLK
 	currentStateCLK = digitalRead(CLK);
