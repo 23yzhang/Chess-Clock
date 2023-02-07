@@ -9,10 +9,10 @@
 #define MODE_BUTTON 13
 
 // the button for player 0
-#define BUTTON_0 8
+#define BUTTON0 8
 
 // the button for player 1.
-#define BUTTON_1 7
+#define BUTTON1 7
 
 #define SERVOPIN 9
 
@@ -26,6 +26,10 @@ int seconds = 0;
 int servoPosition = 0;
 Servo clockServo;
 
+// use state variables to debounce the player buttons.  Delays take too much time.
+bool button0State;
+bool button1State;
+
 // this enumeration is used to represent the mode of the system.
 enum SystemMode {
   MODE_SET,
@@ -34,7 +38,7 @@ enum SystemMode {
 };
 
 // 0 if player 0, 1 if player 1. 
-unsigned char currPlayer = 0;
+unsigned char currentPlayer = 0;
 
 // this variable keeps track of the current system mode.
 SystemMode currentMode;
@@ -48,6 +52,12 @@ void setup() {
 
   pinMode(RED_LED, OUTPUT);
   pinMode(MODE_BUTTON, INPUT_PULLUP);
+  pinMode(BUTTON0, INPUT_PULLUP);
+  pinMode(BUTTON1, INPUT_PULLUP);
+
+  // assume buttons are initially unpressed.
+  button0State = false;
+  button1State = false;
 
 	// Setup Serial Monitor
 	Serial.begin(115200);
@@ -61,6 +71,7 @@ void setup() {
 }
 
 void loop() {
+  int btnState;
 
   // refresh LED.
   if (currentMode == MODE_SET) {
@@ -74,6 +85,7 @@ void loop() {
   // check mode button.
   int modeVal = !digitalRead(MODE_BUTTON);
   if (modeVal == 1) {
+    // button is pressed, toggle the mode between set and ready.
     if (currentMode == MODE_SET) {
       currentMode = MODE_READY;
     } else {
@@ -82,7 +94,44 @@ void loop() {
     // delay to allow user time to release button.
     delay(250);
   }
-	
+
+  // check player buttons.
+  if (digitalRead(BUTTON0) == LOW && button0State == false) {
+    // button 0 was just pressed.
+    button0State = true;
+
+    // are we in ready mode?
+    if (currentMode == MODE_READY) {
+      // switch to play mode.
+      currentMode = MODE_PLAY;
+    }
+
+    // toggle player.
+    currentPlayer = 1;
+
+  } else if (digitalRead(BUTTON0) == HIGH && button0State == true) {
+    // button 0 was just released.
+    button0State = false;
+  }
+
+  if (digitalRead(BUTTON1) == LOW && button1State == false) {
+    // button 1 was just pressed.
+    button1State = true;
+
+    // are we in ready mode?
+    if (currentMode == MODE_READY) {
+      // switch to play mode.
+      currentMode = MODE_PLAY;
+    }
+
+    // toggle player.
+    currentPlayer = 0;
+
+  } else if (digitalRead(BUTTON1) == HIGH && button1State == true) {
+    // button 1 was just released.
+    button1State = false;
+  }
+
   // only update clock through encoders if in MODE_SET.
   if (currentMode == MODE_SET) {
     // Read the current state of CLK
@@ -113,7 +162,7 @@ void loop() {
 	  lastStateCLK = currentStateCLK;
 
   	// Read the button state
-	  int btnState = digitalRead(SW);
+	  btnState = digitalRead(SW);
 
 	  //If we detect LOW signal, button is pressed
 	  if (btnState == LOW) {
