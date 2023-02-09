@@ -22,9 +22,6 @@ int lastStateCLK;
 String currentDir ="";
 unsigned long lastButtonPress = 0;
 
-int btnState;
-int modeVal;
-
 int seconds = 0;
 int servoPosition = 0;
 Servo clockServo;
@@ -52,7 +49,36 @@ unsigned char currentPlayer = 0;
 SystemMode currentMode;
 SystemMode previousMode;
 
-void adjustClock() {
+void checkModeSetButton() {
+  // check mode button.
+  int modeVal;
+  modeVal = !digitalRead(MODE_BUTTON);
+  if (modeVal == 1) {
+    // button is pressed, toggle the mode between set and ready.
+    // first set previous mode.
+    previousMode = currentMode;
+    if (currentMode == MODE_SET) {
+      currentMode = MODE_READY;
+    } else {
+      currentMode = MODE_SET;
+    }
+    // delay to allow user time to release button.
+    delay(250);
+  }
+}
+
+void refreshModeLED() {
+    // refresh LED.
+  if (currentMode == MODE_SET) {
+    // turn on mode LED.
+    digitalWrite(RED_LED, HIGH);
+  } else {
+    // turn off mode LED.
+    digitalWrite(RED_LED, LOW);
+  }
+}
+
+void adjustClocks() {
     // Read the current state of CLK
 	  currentStateCLK = digitalRead(CLK);
 
@@ -81,13 +107,14 @@ void adjustClock() {
 	  lastStateCLK = currentStateCLK;
 
   	// Read the button state
+    int btnState;
 	  btnState = digitalRead(SW);
 
 	  //If we detect LOW signal, button is pressed
 	  if (btnState == LOW) {
-		//if 50ms have passed since last LOW pulse, it means that the
+		//if 250ms have passed since last LOW pulse, it means that the
 		//button has been pressed, released and pressed again
-		if (millis() - lastButtonPress > 50) {
+		if (millis() - lastButtonPress > 250) {
 			Serial.println("Button pressed!");
 
       // reset counter
@@ -121,58 +148,7 @@ void adjustClock() {
   clockServo.write(servoPosition);
 }
 
-void setup() {
-	
-	// Set encoder pins as inputs
-	pinMode(CLK,INPUT);
-	pinMode(DT,INPUT);
-	pinMode(SW, INPUT_PULLUP);
-
-  pinMode(RED_LED, OUTPUT);
-  pinMode(MODE_BUTTON, INPUT_PULLUP);
-  pinMode(BUTTON0, INPUT_PULLUP);
-  pinMode(BUTTON1, INPUT_PULLUP);
-
-  // assume buttons are initially unpressed.
-  button0State = false;
-  button1State = false;
-
-	// Setup Serial Monitor
-	Serial.begin(115200);
-
-	// Read the initial state of CLK
-	lastStateCLK = digitalRead(CLK);
-
-  clockServo.attach(SERVOPIN);
-
-  currentMode = MODE_SET;
-}
-
-void loop() {
-  // refresh LED.
-  if (currentMode == MODE_SET) {
-    // turn on mode LED.
-    digitalWrite(RED_LED, HIGH);
-  } else {
-    // turn off mode LED.
-    digitalWrite(RED_LED, LOW);
-  }
-
-  // check mode button.
-  modeVal = !digitalRead(MODE_BUTTON);
-  if (modeVal == 1) {
-    // button is pressed, toggle the mode between set and ready.
-    // first set previous mode.
-    previousMode = currentMode;
-    if (currentMode == MODE_SET) {
-      currentMode = MODE_READY;
-    } else {
-      currentMode = MODE_SET;
-    }
-    // delay to allow user time to release button.
-    delay(250);
-  }
-
+void checkPlayerButtons() {
   // check player buttons.
   if (digitalRead(BUTTON0) == LOW && button0State == false) {
     // button 0 was just pressed.
@@ -183,7 +159,6 @@ void loop() {
       // switch to play mode.
       previousMode = currentMode;
       currentMode = MODE_PLAY;
-
       // set initial time values.
     }
 
@@ -220,13 +195,50 @@ void loop() {
     button1State = false;
   }
 
-  // update time remaining.
+}
 
+void checkAdjustClocks() {
   // only update clock through encoders if in MODE_SET.
   // if you update the clock, also update the time remaining variable.
   if (currentMode == MODE_SET) {
-    adjustClock();
+    adjustClocks();
   }
- 
+}
+
+void setup() {
 	
+	// Set encoder pins as inputs
+	pinMode(CLK,INPUT);
+	pinMode(DT,INPUT);
+	pinMode(SW, INPUT_PULLUP);
+
+  pinMode(RED_LED, OUTPUT);
+  pinMode(MODE_BUTTON, INPUT_PULLUP);
+  pinMode(BUTTON0, INPUT_PULLUP);
+  pinMode(BUTTON1, INPUT_PULLUP);
+
+  // assume buttons are initially unpressed.
+  button0State = false;
+  button1State = false;
+
+	// Setup Serial Monitor
+	Serial.begin(115200);
+
+	// Read the initial state of CLK
+	lastStateCLK = digitalRead(CLK);
+
+  clockServo.attach(SERVOPIN);
+
+  currentMode = MODE_SET;
+}
+
+void loop() {
+  checkModeSetButton();
+  refreshModeLED();
+  checkPlayerButtons();
+
+  // update time remaining.
+
+  checkAdjustClocks();
+
 }
