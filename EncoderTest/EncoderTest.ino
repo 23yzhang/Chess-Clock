@@ -41,10 +41,11 @@ bool button0State;
 bool button1State;
 
 // track remaining time and elapsed time.
-unsigned long remaining_millis0;
+long remaining_millis0;
 unsigned long previous_millis0;
 unsigned long current_millis0; 
-unsigned long remaining_millis1;
+
+long remaining_millis1;
 unsigned long previous_millis1;
 unsigned long current_millis1;
 
