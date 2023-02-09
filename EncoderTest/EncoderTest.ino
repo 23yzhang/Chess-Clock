@@ -141,9 +141,15 @@ void adjustClocks() {
   seconds = map(counter, 0, 20, 0, 300);
   Serial.print("(adjust) seconds = ");
   Serial.println(seconds);
+  delay(1);
 
   // keep track of how much time is remaining (in msec).
-  remaining_millis0 = 1000 * seconds;
+  remaining_millis0 = 1000 * (unsigned long)seconds;
+
+  // debug
+  remaining_millis1 = remaining_millis0;
+  Serial.print("(adjust) remaining_millis0 = ");
+  Serial.println(remaining_millis0);
 
   // map seconds to servo position.
   servoPosition = map(seconds, 0, 300, 0, 180);
@@ -250,6 +256,8 @@ void updateDials() {
 
       // map seconds to servo position. 
     }
+  // delay a little.
+  delay(100);
   }
 }
 
