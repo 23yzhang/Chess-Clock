@@ -31,9 +31,12 @@ bool button0State;
 bool button1State;
 
 // track remaining time and elapsed time.
-unsigned long remainingmillis0;
-unsigned long startmillis0;
-unsigned long currengmillis0; 
+unsigned long remaining_millis0;
+unsigned long previous_millis0;
+unsigned long current_millis0; 
+unsigned long remaining_millis1;
+unsigned long previous_millis1;
+unsigned long current_millis1;
 
 // this enumeration is used to represent the mode of the system.
 enum SystemMode {
@@ -136,11 +139,11 @@ void adjustClocks() {
 
   // map count to seconds.
   seconds = map(counter, 0, 20, 0, 300);
-  Serial.print("seconds = ");
+  Serial.print("(adjust) seconds = ");
   Serial.println(seconds);
 
   // keep track of how much time is remaining (in msec).
-  remainingmillis0 = 1000 * seconds;
+  remaining_millis0 = 1000 * seconds;
 
   // map seconds to servo position.
   servoPosition = map(seconds, 0, 300, 0, 180);
@@ -159,11 +162,11 @@ void checkPlayerButtons() {
       // switch to play mode.
       previousMode = currentMode;
       currentMode = MODE_PLAY;
-      // set initial time values.
     }
-
-    // toggle player.
+    
+    // toggle player and set previous time.
     currentPlayer = 1;
+    previous_millis1 = millis();
 
   } else if (digitalRead(BUTTON0) == HIGH && button0State == true) {
     // button 0 was just released.
@@ -180,21 +183,40 @@ void checkPlayerButtons() {
       previousMode = currentMode;
       currentMode = MODE_PLAY;
     }
-
-    // toggle player.
+    
+    // toggle player and set previous time.
     currentPlayer = 0;
-
-    // update time
-
-    // record start time of current player.
-    startmillis0 = millis();
-
+    previous_millis0 = millis();
 
   } else if (digitalRead(BUTTON1) == HIGH && button1State == true) {
     // button 1 was just released.
     button1State = false;
   }
+}
 
+void updateRemainingTime() {
+  unsigned long delta;
+  if (currentMode == MODE_PLAY) {
+    if(currentPlayer == 0) {
+      //update remaining time for player 0.
+      current_millis0 = millis();
+      delta = current_millis0 - previous_millis0;
+      remaining_millis0 = remaining_millis0 - delta;
+      if (remaining_millis0 < 0) {
+        remaining_millis0 = 0;
+      }
+      previous_millis0 = current_millis0;
+    } else if (currentPlayer == 1) {
+      //update remaining time for player 1.
+      current_millis1 = millis();
+      delta = current_millis1 - previous_millis1;
+      remaining_millis1 = remaining_millis1 - delta;
+      if (remaining_millis1 < 0) {
+        remaining_millis1 = 0;
+      }
+      previous_millis1 = current_millis1;
+    }
+  }
 }
 
 void checkAdjustClocks() {
@@ -202,6 +224,32 @@ void checkAdjustClocks() {
   // if you update the clock, also update the time remaining variable.
   if (currentMode == MODE_SET) {
     adjustClocks();
+  }
+}
+
+void updateDials() {
+  if (currentMode == MODE_PLAY) {
+    // update current player dial.
+    if (currentPlayer == 0) {
+      // map count to seconds.
+      seconds = remaining_millis0 /1000;
+
+      Serial.print("seconds (0) = ");
+      Serial.println(seconds);
+
+      // map seconds to servo position.
+      servoPosition = map(seconds, 0, 300, 0, 180);
+      servoPosition = 180 - servoPosition;
+      clockServo.write(servoPosition);
+    } else if (currentPlayer == 1) {
+      // map count to seconds.
+      seconds = remaining_millis1 /1000;
+
+      Serial.print("seconds (1) = ");
+      Serial.println(seconds);
+
+      // map seconds to servo position. 
+    }
   }
 }
 
@@ -230,15 +278,19 @@ void setup() {
   clockServo.attach(SERVOPIN);
 
   currentMode = MODE_SET;
+  currentPlayer = 0;
 }
 
 void loop() {
   checkModeSetButton();
   refreshModeLED();
+  
+  // update time remaining.
+  // do this before checking the player buttons.
+  updateRemainingTime();
   checkPlayerButtons();
 
-  // update time remaining.
-
+  // update the dials.
+  updateDials();
   checkAdjustClocks();
-
 }
