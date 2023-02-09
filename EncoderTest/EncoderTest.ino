@@ -1,9 +1,9 @@
 #include <Servo.h>
 
 // Rotary Encoder Inputs
-#define CLK 2
-#define DT 3
-#define SW 4
+#define CLK0 2
+#define DT0 3
+#define SW0 4
 
 #define RED_LED 12
 #define MODE_BUTTON 13
@@ -14,17 +14,27 @@
 // the button for player 1.
 #define BUTTON1 7
 
-#define SERVOPIN 9
+#define SERVOPIN0 9
 
-int counter = 0;
-int currentStateCLK;
-int lastStateCLK;
-String currentDir ="";
-unsigned long lastButtonPress = 0;
+int counter0 = 0;
+int currentStateCLK0;
+int lastStateCLK0;
+String currentDir0 ="";
+unsigned long lastButtonPress0 = 0;
 
-int seconds = 0;
-int servoPosition = 0;
-Servo clockServo;
+int seconds0 = 0;
+int servoPosition0 = 0;
+Servo clockServo0;
+
+int counter1 = 0;
+int currentStateCLK1;
+int lastStateCLK1;
+String currentDir1 ="";
+unsigned long lastButtonPress1 = 0;
+
+int seconds1 = 0;
+int servoPosition1 = 0;
+Servo clockServo1;
 
 // use state variables to debounce the player buttons.  Delays take too much time.
 bool button0State;
@@ -83,68 +93,68 @@ void refreshModeLED() {
 
 void adjustClocks() {
     // Read the current state of CLK
-	  currentStateCLK = digitalRead(CLK);
+	  currentStateCLK0 = digitalRead(CLK0);
 
 	  // If last and current state of CLK are different, then pulse occurred
 	  // React to only 1 state change to avoid double count
-	  if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
+	  if (currentStateCLK0 != lastStateCLK0  && currentStateCLK0 == 1){
 
 		  // If the DT state is different than the CLK state then
 		  // the encoder is rotating CCW so decrement
-		  if (digitalRead(DT) != currentStateCLK) {
-		  	counter --;
-			  currentDir ="CCW";
+		  if (digitalRead(DT0) != currentStateCLK0) {
+		  	counter0 --;
+			  currentDir0 ="CCW";
 		  } else {
 			  // Encoder is rotating CW so increment
-			  counter ++;
-			  currentDir ="CW";
+			  counter0 ++;
+			  currentDir0 ="CW";
 		  }
 
 		  Serial.print("Direction: ");
-		  Serial.print(currentDir);
+		  Serial.print(currentDir0);
 		  Serial.print(" | Counter: ");
-		  Serial.println(counter);
+		  Serial.println(counter0);
 	  }
 
 	  // Remember last CLK state
-	  lastStateCLK = currentStateCLK;
+	  lastStateCLK0 = currentStateCLK0;
 
   	// Read the button state
-    int btnState;
-	  btnState = digitalRead(SW);
+    int btnState0;
+	  btnState0 = digitalRead(SW0);
 
 	  //If we detect LOW signal, button is pressed
-	  if (btnState == LOW) {
+	  if (btnState0 == LOW) {
 		//if 250ms have passed since last LOW pulse, it means that the
 		//button has been pressed, released and pressed again
-		if (millis() - lastButtonPress > 250) {
+		if (millis() - lastButtonPress0 > 250) {
 			Serial.println("Button pressed!");
 
       // reset counter
-      counter = 0;
+      counter0 = 0;
 		}
 
 		// Remember last button press event
-		lastButtonPress = millis();
+		lastButtonPress0 = millis();
 	}
 
 	// Put in a slight delay to help debounce the reading
 	delay(1);
 
-  if (counter > 20) {
-    counter = 20;
-  } else if (counter < 0) {
-    counter = 0;
+  if (counter0 > 20) {
+    counter0 = 20;
+  } else if (counter0 < 0) {
+    counter0 = 0;
   }
 
   // map count to seconds.
-  seconds = map(counter, 0, 20, 0, 300);
+  seconds0 = map(counter0, 0, 20, 0, 300);
   Serial.print("(adjust) seconds = ");
-  Serial.println(seconds);
+  Serial.println(seconds0);
   delay(1);
 
   // keep track of how much time is remaining (in msec).
-  remaining_millis0 = 1000 * (unsigned long)seconds;
+  remaining_millis0 = 1000 * (unsigned long)seconds0;
 
   // debug
   remaining_millis1 = remaining_millis0;
@@ -152,9 +162,9 @@ void adjustClocks() {
   Serial.println(remaining_millis0);
 
   // map seconds to servo position.
-  servoPosition = map(seconds, 0, 300, 0, 180);
-  servoPosition = 180 - servoPosition;
-  clockServo.write(servoPosition);
+  servoPosition0 = map(seconds0, 0, 300, 0, 180);
+  servoPosition0 = 180 - servoPosition0;
+  clockServo0.write(servoPosition0);
 }
 
 void checkPlayerButtons() {
@@ -238,21 +248,21 @@ void updateDials() {
     // update current player dial.
     if (currentPlayer == 0) {
       // map count to seconds.
-      seconds = remaining_millis0 /1000;
+      seconds0 = remaining_millis0 /1000;
 
       Serial.print("seconds (0) = ");
-      Serial.println(seconds);
+      Serial.println(seconds0);
 
       // map seconds to servo position.
-      servoPosition = map(seconds, 0, 300, 0, 180);
-      servoPosition = 180 - servoPosition;
-      clockServo.write(servoPosition);
+      servoPosition0 = map(seconds0, 0, 300, 0, 180);
+      servoPosition0 = 180 - servoPosition0;
+      clockServo0.write(servoPosition0);
     } else if (currentPlayer == 1) {
       // map count to seconds.
-      seconds = remaining_millis1 /1000;
+      seconds1 = remaining_millis1 /1000;
 
       Serial.print("seconds (1) = ");
-      Serial.println(seconds);
+      Serial.println(seconds1);
 
       // map seconds to servo position. 
     }
@@ -264,9 +274,9 @@ void updateDials() {
 void setup() {
 	
 	// Set encoder pins as inputs
-	pinMode(CLK,INPUT);
-	pinMode(DT,INPUT);
-	pinMode(SW, INPUT_PULLUP);
+	pinMode(CLK0,INPUT);
+	pinMode(DT0,INPUT);
+	pinMode(SW0, INPUT_PULLUP);
 
   pinMode(RED_LED, OUTPUT);
   pinMode(MODE_BUTTON, INPUT_PULLUP);
@@ -281,9 +291,9 @@ void setup() {
 	Serial.begin(115200);
 
 	// Read the initial state of CLK
-	lastStateCLK = digitalRead(CLK);
+	lastStateCLK0 = digitalRead(CLK0);
 
-  clockServo.attach(SERVOPIN);
+  clockServo0.attach(SERVOPIN0);
 
   currentMode = MODE_SET;
   currentPlayer = 0;
