@@ -99,6 +99,9 @@ void refreshModeLED() {
 }
 
 void adjustClocks() {
+    //**********************************
+    // adjust the clock for player 0
+    //**********************************
     // Read the current state of CLK
 	  currentStateCLK0 = digitalRead(CLK0);
 
@@ -117,10 +120,6 @@ void adjustClocks() {
 			  currentDir0 ="CW";
 		  }
 
-		  Serial.print("Direction: ");
-		  Serial.print(currentDir0);
-		  Serial.print(" | Counter: ");
-		  Serial.println(counter0);
 	  }
 
 	  // Remember last CLK state
@@ -146,7 +145,7 @@ void adjustClocks() {
 	}
 
 	// Put in a slight delay to help debounce the reading
-	delay(1);
+	//delay(1);
 
   if (counter0 > 20) {
     counter0 = 20;
@@ -158,20 +157,84 @@ void adjustClocks() {
   seconds0 = map(counter0, 0, 20, 0, 300);
 //  Serial.print("(adjust) seconds = ");
 //  Serial.println(seconds0);
-  delay(1);
+  //delay(1);
 
   // keep track of how much time is remaining (in msec).
   remaining_millis0 = 1000 * (unsigned long)seconds0;
-
-  // debug
-  remaining_millis1 = remaining_millis0;
-  //Serial.print("(adjust) remaining_millis0 = ");
-  //Serial.println(remaining_millis0);
 
   // map seconds to servo position.
   servoPosition0 = map(seconds0, 0, 300, 0, 180);
   servoPosition0 = 180 - servoPosition0;
   clockServo0.write(servoPosition0);
+
+  //**********************************
+  // adjust the clock for player 1
+  //**********************************
+  // Read the current state of CLK
+	currentStateCLK1 = digitalRead(CLK1);
+
+	  // If last and current state of CLK are different, then pulse occurred
+	  // React to only 1 state change to avoid double count
+	  if (currentStateCLK1 != lastStateCLK1  && currentStateCLK1 == 1){
+
+		  // If the DT state is different than the CLK state then
+		  // the encoder is rotating CCW so decrement
+		  if (digitalRead(DT1) != currentStateCLK1) {
+		  	counter1 --;
+			  currentDir1 ="CCW";
+		  } else {
+			  // Encoder is rotating CW so increment
+			  counter1 ++;
+			  currentDir1 ="CW";
+		  }
+	  }
+
+	  // Remember last CLK state
+	  lastStateCLK1 = currentStateCLK1;
+
+  	// Read the button state
+    int btnState1;
+	  btnState1 = digitalRead(SW1);
+
+	  //If we detect LOW signal, button is pressed
+	  if (btnState1 == LOW) {
+		//if 250ms have passed since last LOW pulse, it means that the
+		//button has been pressed, released and pressed again
+		if (millis() - lastButtonPress1 > 250) {
+			Serial.println("SW 1 pressed!");
+
+      // reset counter
+      counter1 = 0;
+		}
+
+		// Remember last button press event
+		lastButtonPress1 = millis();
+	}
+
+	// Put in a slight delay to help debounce the reading
+	//delay(1);
+
+  if (counter1 > 20) {
+    counter1 = 20;
+  } else if (counter1 < 0) {
+    counter1 = 0;
+  }
+
+  // map count to seconds.
+  seconds1 = map(counter1, 0, 20, 0, 300);
+//  Serial.print("(adjust) seconds (1) = ");
+//  Serial.println(seconds1);
+  //delay(1);
+
+  // keep track of how much time is remaining (in msec).
+  remaining_millis1 = 1000 * (unsigned long)seconds1;
+
+  
+  // map seconds to servo position.
+  servoPosition1 = map(seconds1, 0, 300, 0, 180);
+  servoPosition1 = 180 - servoPosition1;
+  clockServo1.write(servoPosition1);
+
 }
 
 void checkPlayerButtons() {
@@ -272,6 +335,10 @@ void updateDials() {
       Serial.println(seconds1);
 
       // map seconds to servo position. 
+      // map seconds to servo position.
+      servoPosition1 = map(seconds1, 0, 300, 0, 180);
+      servoPosition1 = 180 - servoPosition1;
+      clockServo1.write(servoPosition1);
     }
   // delay a little.
   delay(100);
@@ -284,6 +351,11 @@ void setup() {
 	pinMode(CLK0,INPUT);
 	pinMode(DT0,INPUT);
 	pinMode(SW0, INPUT_PULLUP);
+
+  // Set encoder pins as inputs
+	pinMode(CLK1,INPUT);
+	pinMode(DT1,INPUT);
+	pinMode(SW1, INPUT_PULLUP);
 
   pinMode(RED_LED, OUTPUT);
   pinMode(MODE_BUTTON, INPUT_PULLUP);
@@ -299,8 +371,10 @@ void setup() {
 
 	// Read the initial state of CLK
 	lastStateCLK0 = digitalRead(CLK0);
+  lastStateCLK1 = digitalRead(CLK1);
 
   clockServo0.attach(SERVOPIN0);
+  clockServo1.attach(SERVOPIN1);
 
   currentMode = MODE_SET;
   currentPlayer = 0;
@@ -314,7 +388,7 @@ void loop() {
   // do this before checking the player buttons.
   updateRemainingTime();
   checkPlayerButtons();
-
+  
   // update the dials.
   updateDials();
   checkAdjustClocks();
