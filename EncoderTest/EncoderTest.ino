@@ -3,7 +3,12 @@
 // Rotary Encoder Inputs
 #define CLK0 2
 #define DT0 3
-#define SW0 4
+#define SW0 6
+
+// Rotary Encoder Inputs
+#define CLK1 10
+#define DT1 11
+#define SW1 4
 
 #define RED_LED 12
 #define MODE_BUTTON 13
@@ -15,6 +20,7 @@
 #define BUTTON1 7
 
 #define SERVOPIN0 9
+#define SERVOPIN1 5
 
 int counter0 = 0;
 int currentStateCLK0;
@@ -150,8 +156,8 @@ void adjustClocks() {
 
   // map count to seconds.
   seconds0 = map(counter0, 0, 20, 0, 300);
-  Serial.print("(adjust) seconds = ");
-  Serial.println(seconds0);
+//  Serial.print("(adjust) seconds = ");
+//  Serial.println(seconds0);
   delay(1);
 
   // keep track of how much time is remaining (in msec).
@@ -159,8 +165,8 @@ void adjustClocks() {
 
   // debug
   remaining_millis1 = remaining_millis0;
-  Serial.print("(adjust) remaining_millis0 = ");
-  Serial.println(remaining_millis0);
+  //Serial.print("(adjust) remaining_millis0 = ");
+  //Serial.println(remaining_millis0);
 
   // map seconds to servo position.
   servoPosition0 = map(seconds0, 0, 300, 0, 180);
